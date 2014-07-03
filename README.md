@@ -1,15 +1,15 @@
 Arrrgh
 ======
 
-Jeff Wofford
-July 2014
-e:  biz@jeffwofford.com
-w:  http://www.jeffwofford.com
+Jeff Wofford | July 2014 | e:  biz@jeffwofford.com | w:  http://www.jeffwofford.com
 
-**arrrgh** is a fast, small, simple, powerful, single-header library for parsing command line arguments in C++
-using more-or-less POSIX parsing rules.
+**arrrgh** is a fast, small, simple, powerful, single-header library for parsing command line arguments in C++ using more-or-less POSIX parsing rules. It is written using modern C++11 paradigms so it's safe, fast, and tends to invite clean, small, to-the-point code.
 
-# To use
+There are lots of other command line parsers out there. Yet every time I wrote a new command line program, I ended up rolling my own underpowered and error-prone argument parsing. I like [TCLAP](http://tclap.sourceforge.net/) but it's a full library with makefiles, lots of source and headers, and the rest. Likewise for getopt, boost, and others: the command line parsing code can end up vastly outweighing the program it's meant to serve. Plus, integrating headers and libraries into C/C++ programs is never a lot of fun, especially when porting to different IDEs and compilers. [The Lean Mean Option Parser](http://optionparser.sourceforge.net/index.html) is nice and small but I didn't prefer its style. You can disagree.
+
+I wrote **arrrgh** to escape the madness. It's a single file. You copy it into your project. You include it. You set up the arguments you want to support. It does the rest.
+
+# To Use
 
 1.	Include the header:
 
