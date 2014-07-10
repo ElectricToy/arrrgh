@@ -675,7 +675,7 @@ namespace arrrgh
 	template<>
 	std::string argument< std::string >::value() const
 	{
-		return value_string();
+		return m_assigned ? value_string() : m_defaultValue;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
