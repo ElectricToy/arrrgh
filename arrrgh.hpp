@@ -50,8 +50,8 @@
 //  	4.	In the add() function you'll indicate the long-form ("--example") and short-form ("-e") switches for this 
 //  		argument. You can nullify one or the other if you want.
 //  		You should specify a description (the second argument).
-//  		You may also specify whether the argument is optional or required, and what the default value is (in case 
-//  		the user doesn't supply it):
+//  		You may also specify whether the argument is optional or required, and what the default value is (the value
+//  		to be used if the user doesn't supply it):
 //
 //  			... parser.add< float >(
 //  					"<long-form>",			// Use "example" if you want the user to say "--example", 
@@ -343,7 +343,7 @@ namespace arrrgh
 		//
 		ARRRGH_EXCEPTION( ValueConversionError )
 
-		value_t value() const
+		operator value_t() const
 		{
 			value_t result = m_defaultValue;
 			
@@ -362,6 +362,8 @@ namespace arrrgh
 			
 			return result;
 		}
+		
+		value_t value() const { return operator value_t(); }
 		
 	private:
 		
@@ -429,12 +431,8 @@ namespace arrrgh
 		{
 			// Verify that no other argument has this longForm or letter.
 			//
-			assert( !std::any_of( m_arguments.begin(), m_arguments.end(),
-								 [&]( const std::unique_ptr< argument_abstract >& arg )
-								 {
-									 assert( arg );
-									 return arg->has_long_form( longForm ) || arg->has_short_form( letter );
-								 } ));
+			assert( !has_long_form_argument( longForm ));
+			assert( !has_letter_argument( letter ));
 			
 			argument< ValueT >* arg = new argument< ValueT >{
 				longForm,
@@ -448,6 +446,26 @@ namespace arrrgh
 			return *arg;
 		}
 		
+		bool has_long_form_argument( const std::string& longForm ) const
+		{
+			return std::any_of( m_arguments.begin(), m_arguments.end(),
+						[&]( const std::unique_ptr< argument_abstract >& arg )
+						{
+							assert( arg );
+							return arg->has_long_form( longForm );
+						} );
+		}
+		
+		bool has_letter_argument( char letter ) const
+		{
+			return std::any_of( m_arguments.begin(), m_arguments.end(),
+							   [&]( const std::unique_ptr< argument_abstract >& arg )
+							   {
+								   assert( arg );
+								   return arg->has_short_form( letter );
+							   } );
+		}
+		
 		void parse( const int argc, const char* argv[] )
 		{
 			if( argc == 0 || !argv )
@@ -455,6 +473,23 @@ namespace arrrgh
 				throw InvalidParameters{ "Received no arguments." };
 			}
 
+			// If there's no help argument, add one.
+			//
+			if( !has_long_form_argument( "help" ))
+			{
+				add< bool >( "help",
+							 "Prints this help message.",
+							 !has_letter_argument( 'h' ) ? 'h' : '\0' );
+			}
+			
+			auto iterHelpArg = std::find_if( m_arguments.begin(), m_arguments.end(), []( const std::unique_ptr< argument_abstract >& arg )
+										 {
+											 return arg->has_long_form( "help" );
+										 } );
+			assert( m_arguments.end() != iterHelpArg );
+			
+			const argument< bool >& helpArg = *static_cast< const argument< bool >* >( iterHelpArg->get() );
+			
 			m_programExecutionPath = argv[ 0 ];
 			
 			bool doneWithSwitches = false;		// When false, still looking for switches. When true, all arguments
@@ -464,7 +499,7 @@ namespace arrrgh
 			{
 				assert( argv[ i ] );
 				
-				std::string arg{ argv[ i ] };
+				const std::string arg{ argv[ i ] };
 				assert( !arg.empty() );
 				
 				// Determine which configured argument corresponds to this program argument, if any,
@@ -573,6 +608,13 @@ namespace arrrgh
 			{
 				throw MissingRequiredArguments{ "Some required arguments were missing." };
 			}
+			
+			// Did our help argument get set?
+			//
+			if( helpArg.value() )
+			{
+				show_usage();
+			}
 		}
 		
 		void show_usage( std::ostream& out = std::cout ) const
@@ -667,13 +709,13 @@ namespace arrrgh
 	// Specializations
 	//
 	template<>
-	inline bool argument< bool >::value() const
+	inline argument< bool >::operator bool() const
 	{
 		return m_assigned || m_defaultValue;
 	}
 
 	template<>
-	std::string argument< std::string >::value() const
+	inline argument< std::string >::operator std::string() const
 	{
 		return m_assigned ? value_string() : m_defaultValue;
 	}
@@ -716,6 +758,13 @@ namespace arrrgh
 		static constexpr const char* name() { return "int"; }
 	};
 
+	template<>
+	struct type_traits< size_t >
+	{
+		static constexpr bool always_requires_value() { return true; }
+		static constexpr const char* name() { return "size_t"; }
+	};
+	
 #undef arrrgh_collect_string
 #undef ARRRGH_EXCEPTION
 
