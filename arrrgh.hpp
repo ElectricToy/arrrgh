@@ -149,11 +149,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <algorithm>
 #include <cassert>
-#include <vector>
-#include <sstream>
-#include <iostream>
+#include <cctype>
 #include <iomanip>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <vector>
 
 namespace arrrgh
 {
